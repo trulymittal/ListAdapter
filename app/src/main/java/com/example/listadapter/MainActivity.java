@@ -1,6 +1,8 @@
 package com.example.listadapter;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -17,6 +19,7 @@ public class MainActivity extends AppCompatActivity implements MovieListAdapter.
 
     private static final String TAG = "MainActivity";
     private MovieListAdapter movieListAdapter;
+    private MovieViewModel movieViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,23 +31,19 @@ public class MainActivity extends AppCompatActivity implements MovieListAdapter.
         movieListAdapter = new MovieListAdapter( Movie.itemCallback , this);
         recyclerView.setAdapter(movieListAdapter);
 
-        initMovieList();
-    }
+        movieViewModel = new ViewModelProvider(this).get(MovieViewModel.class);
+        movieViewModel.getMovieList().observe(this, new Observer<List<Movie>>() {
+            @Override
+            public void onChanged(List<Movie> movies) {
+                movieListAdapter.submitList(movies);
+            }
+        });
 
-    private void initMovieList() {
-        List<Movie> movieList = new ArrayList<>();
-        movieList.add(new Movie("Captain America", "8"));
-        movieList.add(new Movie("Iron Man", "7"));
-        movieList.add(new Movie("Thor", "6"));
-
-        movieListAdapter.submitList(movieList);
     }
 
     public void addItem(View view) {
         Movie movie = new Movie("Avenger's", "9");
-        List<Movie> movieList = new ArrayList<>(movieListAdapter.getCurrentList());
-        movieList.add(movie);
-        movieListAdapter.submitList(movieList);
+        movieViewModel.addMovie(movie);
     }
 
     public void updateItem(View view) {
@@ -55,17 +54,11 @@ public class MainActivity extends AppCompatActivity implements MovieListAdapter.
         updateMovie.setId(movie.getId());
         updateMovie.setName(movie.getName() + " :updated");
 
-        List<Movie> movieList = new ArrayList<>(movieListAdapter.getCurrentList());
-        movieList.remove(movie);
-        movieList.add(randomPostion, updateMovie);
-
-        movieListAdapter.submitList(movieList);
+        movieViewModel.updateMovie(updateMovie, randomPostion);
     }
 
     @Override
     public void onDelete(int position) {
-        List<Movie> movieList = new ArrayList<>(movieListAdapter.getCurrentList());
-        movieList.remove(position);
-        movieListAdapter.submitList(movieList);
+        movieViewModel.deleteMovie(position);
     }
 }
